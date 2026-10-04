@@ -1,0 +1,1 @@
+{"name":"xinliu-flow-lab","version":"1.0.0","private":true,"description":"A source-grounded, interactive Chinese guide to flow.","scripts":{"start":"node server.mjs","check":"node --check app.js && node --check server.mjs && node --test tests/*.test.mjs"},"engines":{"node":">=20"}}
