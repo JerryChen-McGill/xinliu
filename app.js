@@ -8,6 +8,7 @@ const resources = [
   {id:'review',type:'research',title:'把视野拉远：252 项研究的版图',meta:'[5] Peifer 等 · 2022 · 范围综述',description:'A Scoping Review of Flow Research。覆盖 2000–2016 年发表的 252 项研究，讨论前因、体验与结果；这是研究版图，不是 252 次同一结论的重复验证。',access:'开放获取全文',url:'https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.815665/full'},
   {id:'ted',type:'start',title:'听作者亲自讲述：Flow, the secret to happiness',meta:'[6] Mihaly Csikszentmihalyi · TED 2004 · 演讲',description:'从创作和日常体验理解这个概念的来由。适合先建立直觉，再回到论文核对证据；演讲不是干预效果的证明。可在播放页查看可用字幕。',access:'观看演讲 · 约 19 分钟',url:'https://www.ted.com/talks/mihaly_csikszentmihalyi_flow_the_secret_to_happiness'}
 ];
+const resourcePreviews={book:'从体验、日常生活到意义，回到这本书的完整思路。',concept:'由理论提出者解释心流模型与测量方法。',balance:'难度匹配重要，但为什么还不能保证心流？',performance:'阅读心流与表现的关系，以及因果判断的边界。',review:'看见不同情境中的研究，也看见定义与测量的分歧。',ted:'先听作者讲述，再沿文献深入探索。'};
 function renderResources(filter = 'all') {
   $('#resource-list').replaceChildren();
   resources.filter(r => filter === 'all' || r.type === filter).forEach(r => {
@@ -15,6 +16,7 @@ function renderResources(filter = 'all') {
     const number = document.createElement('span'); number.className = 'resource-num'; number.textContent = String(resources.indexOf(r)+1).padStart(2,'0');
     const body = document.createElement('div');
     const title = document.createElement('h3'); title.textContent = r.title; body.append(title);
+    const preview = document.createElement('p'); preview.className='resource-preview'; preview.textContent=resourcePreviews[r.id]; body.append(preview);
     const detail = document.createElement('details');
     const summary = document.createElement('summary'); summary.textContent = '了解更多';
     const icon = document.createElement('span'); icon.className = 'fold-icon'; icon.textContent = '+'; icon.setAttribute('aria-hidden','true'); summary.append(icon); detail.append(summary);
@@ -48,6 +50,31 @@ function updateMap() {
   $('#state-name').textContent=state;$('#state-advice').textContent=advice;
 }
 $('#challenge').addEventListener('input',updateMap);$('#skill').addEventListener('input',updateMap);updateMap();
+document.querySelectorAll('[data-map]').forEach(button=>button.addEventListener('click',()=>{
+  const [challenge,skill]=button.dataset.map.split(',');$('#challenge').value=challenge;$('#skill').value=skill;updateMap();
+  document.querySelectorAll('[data-map]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+}));
+function clearMapPreset(){document.querySelectorAll('[data-map]').forEach(b=>b.setAttribute('aria-pressed','false'));}
+$('#challenge').addEventListener('input',clearMapPreset);$('#skill').addEventListener('input',clearMapPreset);
+const sceneExamples={
+ reading:['阅读','你不只是在读字，而是在追着一个问题。','内容稍有难度，但你能理解。你不断形成猜想、在下一段里核对，注意力逐渐留在书里。','试试看：带着一个问题读一节，再用自己的话回答。'],
+ creating:['创作','你在解决眼前的表达问题，而不是评价自己。','写作、绘画或音乐练习里，你知道要调整哪个细节。一次修改带来反馈，下一步接着发生。','试试看：只处理一个段落、一个构图或一小节旋律。'],
+ moving:['运动','动作、节奏与反馈，让注意力回到此刻。','你选择能掌握的动作，观察节奏和完成情况，在安全范围内逐渐调整挑战。投入来自活动的过程。','试试看：挑一个熟悉的动作，只观察一个可见细节；遵守自己的身体与安全边界。'],
+ working:['工作','问题有边界，下一步也清楚。','你把复杂工作缩小成一件可完成的事，做一次尝试，检查结果，再决定如何继续。','试试看：给当前任务写下“完成条件”和“检查方式”。']
+};
+document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
+ const example=sceneExamples[button.dataset.scene];['#scene-label','#scene-title','#scene-description','#scene-action'].forEach((id,i)=>$(id).textContent=example[i]);
+ document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+}));
+const conditionExamples={
+ goal:['模糊的愿望：今晚好好学习。','具体的目标：读一节，写下三个要点。','给这次行动一个结束边界，知道眼前要完成什么。'],
+ feedback:['缺少反馈：看完就算完成，但不知道理解了多少。','可见的反馈：合上书复述，再核对遗漏。','让结果回应你的行动。反馈也可以来自材料、作品或他人，不一定是分数。'],
+ challenge:['失去匹配：直接做最难的题，或反复做早已熟练的题。','调整挑战：先做一题可尝试的，再逐渐增加难度。','观察自己的体验，缩小或扩展任务。这是教学建议，不是进入心流的保证。']
+};
+document.querySelectorAll('[data-condition]').forEach(button=>button.addEventListener('click',()=>{
+ const example=conditionExamples[button.dataset.condition];['#condition-before','#condition-after','#condition-why'].forEach((id,i)=>$(id).textContent=example[i]);
+ document.querySelectorAll('[data-condition]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+}));
 document.querySelectorAll('[data-answer]').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('[data-answer]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
   $('#quiz-feedback').textContent=(button.dataset.answer==='no'?'判断正确。':'再想一步。')+'时间感改变只是线索。还需了解目标、挑战、反馈与投入体验；仅凭“忘记时间”无法判断。';
