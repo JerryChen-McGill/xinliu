@@ -14,11 +14,15 @@ function renderResources(filter = 'all') {
     const item = document.createElement('article'); item.className = 'resource'; item.id = `source-${r.id}`;
     const number = document.createElement('span'); number.className = 'resource-num'; number.textContent = String(resources.indexOf(r)+1).padStart(2,'0');
     const body = document.createElement('div');
-    for (const [tag, text, cls] of [['h3',r.title,''],['p',r.meta,'resource-meta'],['p',r.description,'']]) {
-      const node = document.createElement(tag); node.textContent = text; node.className = cls; body.append(node);
+    const title = document.createElement('h3'); title.textContent = r.title; body.append(title);
+    const detail = document.createElement('details');
+    const summary = document.createElement('summary'); summary.textContent = '了解更多';
+    const icon = document.createElement('span'); icon.className = 'fold-icon'; icon.textContent = '+'; icon.setAttribute('aria-hidden','true'); summary.append(icon); detail.append(summary);
+    for (const [tag, text, cls] of [['p',r.meta,'resource-meta'],['p',r.description,'']]) {
+      const node = document.createElement(tag); node.textContent = text; node.className = cls; detail.append(node);
     }
     const link = document.createElement('a'); link.href = r.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.className = 'resource-action'; link.textContent = r.access + ' ↗';
-    item.append(number,body,link); $('#resource-list').append(item);
+    detail.append(link); body.append(detail); item.append(number,body); $('#resource-list').append(item);
   });
 }
 function setFilter(filter) {
@@ -28,7 +32,7 @@ function setFilter(filter) {
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>setFilter(b.dataset.filter)));
 document.querySelectorAll('a[href^="#source-"]').forEach(a=>a.addEventListener('click',()=>setFilter('all')));
 renderResources();
-function revealSource() { if(location.hash.startsWith('#source-')) {setFilter('all');document.getElementById(location.hash.slice(1))?.scrollIntoView();} }
+function revealSource() { if(location.hash.startsWith('#source-')) {setFilter('all');const source=document.getElementById(location.hash.slice(1));if(source){source.querySelector('details').open=true;source.scrollIntoView();}} }
 window.addEventListener('hashchange',revealSource); revealSource();
 
 function updateMap() {
@@ -64,7 +68,7 @@ function finishSession(completed=false){
   running=false;$('#pause').disabled=true;$('#finish').disabled=true;
   $('#timer-label').textContent=completed?'这段练习结束了':'为这次尝试留一点反馈';
   $('#session-note').textContent=completed?'时间到了。休息一下，再回看这次体验。':'提前结束也可以；观察比坚持到零更重要。';
-  $('#reflection').hidden=false;$('#feeling').focus();
+  $('#practice-disclosure').open=true;$('#reflection').hidden=false;$('#feeling').focus();
 }
 $('#duration').addEventListener('change',()=>{remaining=Number($('#duration').value)*60;paintTimer();});
 $('#plan-form').addEventListener('submit',event=>{
@@ -75,7 +79,7 @@ $('#plan-form').addEventListener('submit',event=>{
   remaining=active.duration*60;deadline=Date.now()+remaining*1000;segmentStart=Date.now();elapsedBefore=0;running=true;
   $('#plan-message').textContent='任务已确定。现在只做这一件事。';$('#session-task').textContent=active.task;
   $('#timer-label').textContent='专注进行中';$('#pause').textContent='暂停';$('#pause').disabled=false;$('#finish').disabled=false;$('#reflection').hidden=true;
-  $('#session-note').textContent='计时期间保持本页打开。需要时可以暂停或提前结束。';lockPlan(true);paintTimer();$('#pause').focus();
+  $('#session-note').textContent='计时期间保持本页打开。需要时可以暂停或提前结束。';lockPlan(true);$('#plan-form').hidden=true;$('.session').hidden=false;paintTimer();$('#pause').focus();
 });
 $('#pause').addEventListener('click',()=>{
   if(!active)return;
@@ -93,7 +97,7 @@ function renderRecords(){
   records.slice(0,5).forEach(r=>{const item=document.createElement('article');item.className='record';const h=document.createElement('h4');h.textContent=r.task;const meta=document.createElement('small');meta.textContent=`${new Date(r.date).toLocaleString('zh-CN')} · ${Math.floor(r.seconds/60)} 分 ${r.seconds%60} 秒 · ${r.feeling}`;const p=document.createElement('p');p.textContent=r.note||'这一次，没有添加笔记。';item.append(h,meta,p);$('#records').append(item);});
   if(records.length>5){const p=document.createElement('p');p.className='fineprint';p.textContent='展示最近 5 次；导出可查看全部记录（最多保留 100 次）。';$('#records').append(p);}
 }
-$('#reflection').addEventListener('submit',event=>{event.preventDefault();if(!active)return;records.unshift({...active,date:new Date().toISOString(),feeling:$('#feeling').value,note:$('#note').value.trim()});records=records.slice(0,100);persist();renderRecords();active=null;$('#reflection').hidden=true;$('#note').value='';$('#feeling').selectedIndex=0;lockPlan(false);$('#plan-message').textContent='复盘已记录。可以休息一下，或设计下一次练习。';$('#timer-label').textContent='一次尝试，一点发现';$('#session-note').textContent='下一次只调整一个条件，看看体验有何不同。';$('#export').focus();});
+$('#reflection').addEventListener('submit',event=>{event.preventDefault();if(!active)return;records.unshift({...active,date:new Date().toISOString(),feeling:$('#feeling').value,note:$('#note').value.trim()});records=records.slice(0,100);persist();renderRecords();active=null;$('#reflection').hidden=true;$('#note').value='';$('#feeling').selectedIndex=0;lockPlan(false);$('#plan-form').hidden=false;$('.session').hidden=true;$('#journal-disclosure').open=true;$('#plan-message').textContent='复盘已记录。可以休息一下，或设计下一次练习。';$('#timer-label').textContent='一次尝试，一点发现';$('#session-note').textContent='下一次只调整一个条件，看看体验有何不同。';$('#export').focus();});
 $('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),records},null,2)],{type:'application/json;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='flow-lab-records.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
 $('#clear').addEventListener('click',()=>{if(!window.confirm('删除此浏览器内的全部练习记录？建议先导出备份。'))return;records=[];persist();renderRecords();});
 renderRecords();
